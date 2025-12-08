@@ -5,7 +5,7 @@
 #include <vector>
 #include "lab3.h"
 int main() {
-    std::vector<int> arr = {1, 2, 3, 4, 5, 6, -7, 8, 9, 10};
+    std::vector<int> arr = {1, 2, -3, 4, 5, 6, -7, 8, 9, 10};
     int removed_element=0;
     std::cout << remove_first_negative_element(arr, removed_element) << " " << removed_element;
     return 0;

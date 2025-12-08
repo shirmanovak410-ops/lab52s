@@ -72,7 +72,6 @@ void SortByName(std::vector<Student>& students) {
             return a.Name < b.Name;
         });
 }
-
 // задание 2
 void SortByRating(std::vector<Student>& students) {
     std::sort(students.begin(), students.end(),
@@ -80,7 +79,6 @@ void SortByRating(std::vector<Student>& students) {
             return mean(a.Ratings) < mean(b.Ratings);
         });
 }
-
 // задание 3
 size_t CountTwoness(const std::vector<Student>& students) {
     size_t rez = 0;
