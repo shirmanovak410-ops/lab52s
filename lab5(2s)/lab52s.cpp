@@ -1,9 +1,6 @@
 //
 // Created by Ксения on 12.04.2026.
 //
-//
-// Created by Ксения on 12.04.2026.
-//
 #include <iostream>
 #include <stdexcept>
 #include <string>
