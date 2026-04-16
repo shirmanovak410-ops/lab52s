@@ -1,108 +1,224 @@
 //
 // Created by Ксения on 12.04.2026.
 //
-
-#include <exception>
+//
+// Created by Ксения on 12.04.2026.
+//
 #include <iostream>
-#include <ostream>
+#include <stdexcept>
 #include <string>
-
-class DateException : public std::out_of_range {
+class ArithmeticProgressionException : public std::invalid_argument {
 private:
-    const char* what_;
-    int day;
-    int month;
-    int year;
+    std::string what_;
+    double firstElement;
+    double difference;
+    double* array;
+    int size;
 public:
-    DateException(const char* ch, int day, int month, int year)
-        : out_of_range(ch), what_(ch), day(day), month(month), year(year) {}
-
+    ArithmeticProgressionException(const std::string& ch, double first, double diff, double* arr, int sz)
+        : std::invalid_argument(ch), what_(ch), firstElement(first), difference(diff), size(sz) {
+        if (sz > 0 && arr != nullptr) {
+            array = new double[sz];
+            for (int i = 0; i < sz; i++) {
+                array[i] = arr[i];
+            }
+        } else {
+            array = nullptr;
+        }
+    }
+    ArithmeticProgressionException(const ArithmeticProgressionException& other)
+        : std::invalid_argument(other), what_(other.what_),
+          firstElement(other.firstElement), difference(other.difference), size(other.size) {
+        if (size > 0 && other.array != nullptr) {
+            array = new double[size];
+            for (int i = 0; i < size; i++) {
+                array[i] = other.array[i];
+            }
+        } else {
+            array = nullptr;
+        }
+    }
+    ~ArithmeticProgressionException() {
+        delete[] array;
+    }
     const char* what() const noexcept override {
-        return what_;
+        return what_.c_str();
     }
-
-    void error_print() const {
-        std::cout << what_ << ": " << day << "." << month << "." << year << std::endl;
+    void printAll() const {
+        std::cout << "Exception: " << what() << std::endl;
+        std::cout << "First element: " << firstElement << std::endl;
+        std::cout << "Difference: " << difference << std::endl;
+        std::cout << "Array size: " << size << std::endl;
+        std::cout << "Array elements: ";
+        if (array != nullptr && size > 0) {
+            for (int i = 0; i < size; i++) {
+                std::cout << array[i] << " ";
+            }
+        } else {
+            std::cout << "(invalid or empty array)";
+        }
+        std::cout << std::endl;
     }
+    double getFirstElement() const { return firstElement; }
+    double getDifference() const { return difference; }
+    int getSize() const { return size; }
 };
 
-class Date {
+class ArithmeticProgression {
 private:
-    int day;
-    int month;
-    int year;
-
-    bool isValidDate(int day, int month, int year) const {
-        if (year < 1 || month < 1 || month > 12 || day < 1) {
+    double firstElement;
+    double difference;
+    double* array;
+    int size;
+    bool isValidProgression(double* arr, int sz, double first, double diff) const {
+        if (arr == nullptr || sz <= 0) {
             return false;
         }
-
-        bool isLeapYear = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
-        int daysInMonth[] = {31, 28 + isLeapYear, 31, 30, 31, 30,
-                             31, 31, 30, 31, 30, 31};
-
-        return day <= daysInMonth[month - 1];
+        for (int i = 0; i < sz; i++) {
+            double expected = first + i * diff;
+            if (arr[i] != expected) {
+                return false;
+            }
+        }
+        return true;
     }
-
 public:
-    Date(int day, int month, int year) : day(day), month(month), year(year) {
-        if (!isValidDate(day, month, year)) {
-            std::cout << "Failed to create date" << std::endl;
-            throw DateException("Invalid date", day, month, year);
+    ArithmeticProgression(double first, double diff, double* arr, int sz)
+        : firstElement(first), difference(diff), size(sz) {
+
+        if (sz <= 0) {
+            throw ArithmeticProgressionException("Array size must be positive", first, diff, arr, sz);
+        }
+
+        if (arr == nullptr) {
+            throw ArithmeticProgressionException("Array pointer is null", first, diff, arr, sz);
+        }
+
+        if (!isValidProgression(arr, sz, first, diff)) {
+            throw ArithmeticProgressionException("Array is not an arithmetic progression", first, diff, arr, sz);
+        }
+
+        array = new double[size];
+        for (int i = 0; i < size; i++) {
+            array[i] = arr[i];
         }
     }
-
-    void print() const {
-        printf("%02d.%02d.%04d", day, month, year);
+    ~ArithmeticProgression() {
+        delete[] array;
     }
+    ArithmeticProgression(const ArithmeticProgression& other)
+        : firstElement(other.firstElement), difference(other.difference), size(other.size) {
+        array = new double[size];
+        for (int i = 0; i < size; i++) {
+            array[i] = other.array[i];
+        }
+    }
+    ArithmeticProgression& operator=(const ArithmeticProgression& other) {
+        if (this != &other) {
+            delete[] array;
+            firstElement = other.firstElement;
+            difference = other.difference;
+            size = other.size;
+            array = new double[size];
+            for (int i = 0; i < size; i++) {
+                array[i] = other.array[i];
+            }
+        }
+        return *this;
+    }
+    void print() const {
+        std::cout << "Arithmetic progression:" << std::endl;
+        std::cout << "First element: " << firstElement << std::endl;
+        std::cout << "Difference: " << difference << std::endl;
+        std::cout << "Array (first " << size << " elements): ";
+        for (int i = 0; i < size; i++) {
+            std::cout << array[i] << " ";
+        }
+        std::cout << std::endl;
+    }
+    double getNthElement(int n) const {
+        return firstElement + n * difference;
+    }
+    double getFirstElement() const { return firstElement; }
+    double getDifference() const { return difference; }
+    int getSize() const { return size; }
 
-    friend std::ostream& operator<<(std::ostream& os, const Date& date) {
-        os << (date.day < 10 ? "0" : "") << date.day << "."
-           << (date.month < 10 ? "0" : "") << date.month << "."
-           << date.year;
+    friend std::ostream& operator<<(std::ostream& os, const ArithmeticProgression& ap) {
+        os << "AP(first=" << ap.firstElement << ", diff=" << ap.difference << "): ";
+        for (int i = 0; i < ap.size; i++) {
+            os << ap.array[i] << " ";
+        }
         return os;
     }
-
-    int getDay() const { return day; }
-    int getMonth() const { return month; }
-    int getYear() const { return year; }
 };
-
 int main() {
-    // Тест 1: Неверная дата
+    std::cout << "1: WITHOUT EXCEPTION (VALID PROGRESSION)" << std::endl;
     try {
-        Date date1(29, 2, 2013);
-        std::cout << "Created: " << date1 << std::endl;
-    } catch (const DateException& e) {
-        e.error_print();
+        double arr1[] = {2, 5, 8, 11, 14, 17, 20};
+        ArithmeticProgression ap1(2, 3, arr1, 7);
+        ap1.print();
+        std::cout << "10th element: " << ap1.getNthElement(9) << std::endl;
+        std::cout << ap1 << std::endl;
+
+        ArithmeticProgression ap2 = ap1;
+        std::cout << "Copied progression: " << ap2 << std::endl;
+    } catch (const ArithmeticProgressionException& e) {
+        e.printAll();
     }
     std::cout << std::endl;
-
-    // Тест 2: Неверный день
+    std::cout << "2:WITH EXCEPTION (NOT A PROGRESSION)" << std::endl;
     try {
-        Date date2(32, 12, 2016);
-        std::cout << "Created: " << date2 << std::endl;
-    } catch (const DateException& e) {
-        e.error_print();
+        double arr2[] = {2, 5, 9, 11, 14};
+        ArithmeticProgression ap3(2, 3, arr2, 5);
+        ap3.print();
+    } catch (const ArithmeticProgressionException& e) {
+        e.printAll();
     }
     std::cout << std::endl;
-
-    // Тест 3: Корректная дата (високосный год)
+    std::cout << "3:WITH EXCEPTION (INVALID SIZE)" << std::endl;
     try {
-        Date date3(29, 2, 2004);
-        std::cout << "Created: " << date3 << std::endl;
-    } catch (const DateException& e) {
-        e.error_print();
+        double arr3[] = {1, 2, 3, 4};
+        ArithmeticProgression ap4(1, 1, arr3, -2);
+        ap4.print();
+    } catch (const ArithmeticProgressionException& e) {
+        e.printAll();
     }
     std::cout << std::endl;
-
-    // Тест 4: Демонстрация оператора <<
+    std::cout << "4:WITH EXCEPTION" << std::endl;
     try {
-        Date date4(5, 3, 2024);
-        std::cout << "Date using operator<<: " << date4 << std::endl;
-    } catch (const DateException& e) {
-        e.error_print();
+        ArithmeticProgression ap5(5, 2, nullptr, 3);
+        ap5.print();
+    } catch (const ArithmeticProgressionException& e) {
+        e.printAll();
     }
-
+    std::cout << std::endl;
+    std::cout << "5:WITH EXCEPTION" << std::endl;
+    try {
+        double arr5[] = {10, 13, 16, 19};
+        ArithmeticProgression ap6(1, 3, arr5, 4);
+        ap6.print();
+    } catch (const ArithmeticProgressionException& e) {
+        e.printAll();
+    }
+    std::cout << std::endl;
+    std::cout << "6:VALID PROGRESSION WITH NEGATIVE DIFFERENCE" << std::endl;
+    try {
+        double arr6[] = {20, 17, 14, 11, 8, 5, 2};
+        ArithmeticProgression ap7(20, -3, arr6, 7);
+        std::cout << ap7 << std::endl;
+        std::cout << "15th element: " << ap7.getNthElement(14) << std::endl;
+    } catch (const ArithmeticProgressionException& e) {
+        e.printAll();
+    }
+    std::cout << std::endl;
+    std::cout << "7:VALID PROGRESSION WITH ZERO DIFFERENCE" << std::endl;
+    try {
+        double arr7[] = {5, 5, 5, 5, 5};
+        ArithmeticProgression ap8(5, 0, arr7, 5);
+        std::cout << ap8 << std::endl;
+        std::cout << "100th element: " << ap8.getNthElement(99) << std::endl;
+    } catch (const ArithmeticProgressionException& e) {
+        e.printAll();
+    }
     return 0;
 }
